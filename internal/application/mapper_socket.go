@@ -1,0 +1,38 @@
+package application
+
+import (
+	"log"
+	"net/http"
+
+	"chat-room-api/internal/core/adapter/sockethandler"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+)
+
+func (a *App) MapSocket() *App {
+	a.socket.broadcast = make(chan sockethandler.Message)
+	a.router.GET("/ws/:room", a.buildHandler(a.socket.broadcast))
+	go sockethandler.HandleMessages(a.socket.broadcast)
+	return a
+}
+
+// Handle new WebSocket connections
+func (a *App) buildHandler(broadcast chan sockethandler.Message) gin.HandlerFunc {
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+	return func(c *gin.Context) {
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Println("WebSocket upgrade error:", err)
+			return
+		}
+		defer func() { _ = conn.Close() }()
+
+		a.handlers.ReceiveMessageSocketHandler(c, conn, broadcast)
+	}
+}
