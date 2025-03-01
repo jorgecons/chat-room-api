@@ -1,44 +1,42 @@
 package application
 
 import (
-	"chat-room-api/internal/core/usecase/loginusecase"
 	"context"
 	"log"
 
-	"chat-room-api/internal/core/adapter/webhandler"
-	"chat-room-api/internal/core/repository/user"
-	"chat-room-api/internal/core/usecase/createaccountusecase"
+	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
+	"github.com/jackc/pgx/v5"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 
 	"chat-room-api/internal/core/adapter/eventhandler"
 	"chat-room-api/internal/core/adapter/sockethandler"
+	"chat-room-api/internal/core/adapter/webhandler"
 	"chat-room-api/internal/core/repository/message"
 	"chat-room-api/internal/core/repository/publisher"
 	"chat-room-api/internal/core/repository/stock"
+	"chat-room-api/internal/core/repository/user"
 	"chat-room-api/internal/core/usecase/botusecase"
 	"chat-room-api/internal/core/usecase/chatusecase"
+	"chat-room-api/internal/core/usecase/createaccountusecase"
+	"chat-room-api/internal/core/usecase/loginusecase"
 	"chat-room-api/internal/core/usecase/stockusecase"
-
-	"github.com/go-resty/resty/v2"
-	amqp "github.com/rabbitmq/amqp091-go"
-
-	"github.com/gorilla/websocket"
-
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
-	"github.com/sirupsen/logrus"
 )
 
 type (
 	Handlers struct {
-		ReceiveMessageSocketHandler func(*gin.Context, *websocket.Conn, chan sockethandler.Message)
-		PostMessageHandler          func(chan sockethandler.Message)
-		ConsumeBotMessageHandler    func(context.Context, []byte) error
-		CreateAccountHandler        gin.HandlerFunc
-		LoginHandler                gin.HandlerFunc
+		ConnectChatHandler       sockethandler.HandlerFunc
+		ChatHandler              sockethandler.HandlerFunc
+		PostMessageHandler       func(chan sockethandler.Message)
+		ConsumeBotMessageHandler func(context.Context, []byte) error
+		CreateAccountHandler     gin.HandlerFunc
+		LoginHandler             gin.HandlerFunc
 	}
 )
 
 func (a *App) BuildHandlers() *App {
+	secret := []byte(a.configuration.JWTSecret)
 	p := NewPublisher(a.configuration)
 	stockPriceClient := resty.New().SetBaseURL(a.configuration.StockPriceURL)
 	dbClient := newDBClient(a.configuration.DatabaseURL)
@@ -55,11 +53,12 @@ func (a *App) BuildHandlers() *App {
 	loginUseCase := loginusecase.NewUseCase(userStorage, []byte(a.configuration.JWTSecret))
 
 	a.handlers = Handlers{
-		ReceiveMessageSocketHandler: sockethandler.NewChat(chatUseCase, publishStockUseCase, messageStorage, []byte(a.configuration.JWTSecret)),
-		PostMessageHandler:          sockethandler.HandleMessages,
-		ConsumeBotMessageHandler:    eventhandler.NewBotHandler(botUseCase),
-		CreateAccountHandler:        webhandler.NewCreateAccount(createAccountUseCase),
-		LoginHandler:                webhandler.NewLogin(loginUseCase),
+		ConnectChatHandler:       sockethandler.NewConnectChat(messageStorage, secret),
+		ChatHandler:              sockethandler.NewChat(chatUseCase, publishStockUseCase, secret),
+		PostMessageHandler:       sockethandler.HandleMessages,
+		ConsumeBotMessageHandler: eventhandler.NewBotHandler(botUseCase),
+		CreateAccountHandler:     webhandler.NewCreateAccount(createAccountUseCase),
+		LoginHandler:             webhandler.NewLogin(loginUseCase),
 	}
 
 	return a

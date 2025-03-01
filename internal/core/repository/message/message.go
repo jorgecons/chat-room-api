@@ -50,7 +50,7 @@ func (r *Storage) GetLastMessages(ctx context.Context, room string) ([]domain.Me
 	var messages []domain.Message
 	for rows.Next() {
 		var msg message
-		if err := rows.Scan(&msg.Room, &msg.Username, &msg.Text, &msg.Date); err != nil {
+		if err = rows.Scan(&msg.Room, &msg.Username, &msg.Text, &msg.Date); err != nil {
 			return nil, err
 		}
 

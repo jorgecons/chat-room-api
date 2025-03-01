@@ -10,6 +10,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 func (a *App) MapSocket() *App {
 	a.socket.broadcast = make(chan sockethandler.Message)
 	a.router.GET("/ws/:room", a.buildHandler(a.socket.broadcast))
@@ -19,12 +25,6 @@ func (a *App) MapSocket() *App {
 
 // Handle new WebSocket connections
 func (a *App) buildHandler(broadcast chan sockethandler.Message) gin.HandlerFunc {
-	upgrader := websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
@@ -33,6 +33,9 @@ func (a *App) buildHandler(broadcast chan sockethandler.Message) gin.HandlerFunc
 		}
 		defer func() { _ = conn.Close() }()
 
-		a.handlers.ReceiveMessageSocketHandler(c, conn, broadcast)
+		if err = a.handlers.ConnectChatHandler(c, conn, broadcast); err != nil {
+			return
+		}
+		a.handlers.ChatHandler(c, conn, broadcast)
 	}
 }

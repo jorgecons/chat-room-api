@@ -14,25 +14,36 @@ import (
 )
 
 var (
-	InvalidRoomError     = errors.New("invalid room")
-	InvalidUsernameError = errors.New("invalid username")
-	Chatrooms            = make(map[string]map[*websocket.Conn]bool)
+	InvalidRoomError = errors.New("invalid room")
+	ChatroomError    = errors.New("error connecting to chat room")
+	Chatrooms        = make(map[string]map[*websocket.Conn]bool)
 )
 
 const (
-	UnknownCommand = "Unknown command: %s"
-	SystemUser     = "System"
+	UserContextKey  = "user"
+	UnknownCommand  = "Unknown command: %s"
+	SystemUser      = "System"
+	TokenHeader     = "X-Access-Token"
+	InvalidTokenMsg = "Invalid Token"
 )
 
 type (
-	Handler func(*gin.Context, *websocket.Conn, chan Message)
-	Message struct {
+	HandlerFunc func(*gin.Context, *websocket.Conn, chan Message) error
+	Message     struct {
 		Room     string    `json:"room"`
 		Username string    `json:"username"`
 		Text     string    `json:"text"`
 		Date     time.Time `json:"date"`
 	}
+
+	ErrorMessage struct {
+		Message
+	}
 )
+
+func (e ErrorMessage) Error() string {
+	return e.Text
+}
 
 func BuildMessage(message Message) domain.Message {
 	return domain.Message{
@@ -48,6 +59,17 @@ func BuildSocketMessage(message domain.Message) Message {
 		Username: message.Username,
 		Text:     message.Text,
 		Date:     message.Date,
+	}
+}
+
+func BuildErrorMessage(room, text string) ErrorMessage {
+	return ErrorMessage{
+		Message{
+			Room:     room,
+			Username: SystemUser,
+			Text:     text,
+			Date:     time.Now(),
+		},
 	}
 }
 
@@ -67,15 +89,6 @@ func ValidateUsername(username string, message Message) error {
 		return nil
 	}
 	return InvalidRoomError
-}
-
-func CreateErrorMessage(room, text string) Message {
-	return Message{
-		Room:     room,
-		Username: SystemUser,
-		Text:     text,
-		Date:     time.Now(),
-	}
 }
 
 func validateJWT(secret []byte, tokenString string) (jwt.MapClaims, error) {
