@@ -3,9 +3,6 @@ package sockethandler
 import (
 	"chat-room-api/internal/core/domain"
 	"context"
-	"fmt"
-	"log"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -16,22 +13,17 @@ type (
 	ChatFeature interface {
 		Chat(context.Context, domain.Message) error
 	}
-	StockFeature interface {
-		Stock(context.Context, string, string) error
-	}
 
 	chat struct {
-		chatFeature  ChatFeature
-		stockFeature StockFeature
-		jwtSecret    []byte
+		chatFeature ChatFeature
+		jwtSecret   []byte
 	}
 )
 
-func NewChat(cf ChatFeature, sf StockFeature, jwtSecret []byte) HandlerFunc {
+func NewChat(cf ChatFeature, jwtSecret []byte) HandlerFunc {
 	handler := chat{
-		chatFeature:  cf,
-		stockFeature: sf,
-		jwtSecret:    jwtSecret,
+		chatFeature: cf,
+		jwtSecret:   jwtSecret,
 	}
 	handlerFunc := func(c *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
 		return handler.handle(c, conn, broadcast)
@@ -45,37 +37,28 @@ func (c *chat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast chan Mes
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			log.Println("Read error:", err)
+			logrus.WithContext(ctx).WithError(err).WithField("room", room).Errorln("Error reading message")
 			continue
 		}
 		username := ctx.Value(UserContextKey).(string)
 		if err = ValidateUsername(username, msg); err != nil {
-			logrus.WithContext(ctx).WithField("username", msg.Username).WithError(err).Errorln("Error validating user")
-			_ = conn.WriteJSON(BuildErrorMessage(room, err.Error()))
+			logrus.WithContext(ctx).WithError(err).WithField("username", msg.Username).Errorln("Error validating user")
+			_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
 			continue
 		}
 		if err = ValidateRoom(room, msg); err != nil {
-			logrus.WithContext(ctx).WithField("room", room).WithError(err).Errorln("Error validating message")
-			_ = conn.WriteJSON(BuildErrorMessage(room, err.Error()))
+			logrus.WithContext(ctx).WithError(err).WithField("room", room).Errorln("Error validating message")
+			_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
 			continue
 		}
 
-		// Validate and handle unrecognized messages
-		if strings.HasPrefix(msg.Text, "/") {
-			if !strings.HasPrefix(msg.Text, "/stock=") {
-				logrus.WithContext(ctx).WithField("command", msg.Text).Errorln("Error validating command")
-				m := BuildErrorMessage(room, fmt.Sprintf(UnknownCommand, msg.Text))
-				_ = conn.WriteJSON(m)
-				continue
-			}
-			_ = c.stockFeature.Stock(ctx, msg.Room, GetStockName(msg.Text))
-			// continue //if command should not be a message for all participants
-		}
-		if err = c.chatFeature.Chat(ctx, BuildMessage(msg)); err != nil {
-			logrus.WithContext(ctx).WithField("message", msg).WithError(err).Errorln("Error chatting")
-			_ = conn.WriteJSON(BuildErrorMessage(room, fmt.Sprintf(UnknownCommand, msg.Text)))
+		message := BuildMessage(msg)
+		if err = c.chatFeature.Chat(ctx, message); err != nil {
+			logrus.WithContext(ctx).WithError(err).WithField("message", msg).Errorln("Error chatting")
+			_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
 			continue
 		}
+		msg = BuildSocketMessage(message)
 
 		broadcast <- msg
 	}

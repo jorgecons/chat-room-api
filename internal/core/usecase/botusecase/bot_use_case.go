@@ -1,8 +1,10 @@
 package botusecase
 
 import (
-	"chat-room-api/internal/core/domain"
 	"context"
+	"time"
+
+	"chat-room-api/internal/core/domain"
 )
 
 type (
@@ -30,12 +32,17 @@ func NewUseCase(
 	}
 }
 
-func (uc *UseCase) Bot(ctx context.Context, message domain.Message) error {
-	price, err := uc.stockRepo.GetPrice(ctx, message.Text)
+func (uc *UseCase) Bot(ctx context.Context, msg domain.Message) error {
+	var (
+		text      string
+		stockName = domain.GetStockName(msg.Text)
+	)
+	price, err := uc.stockRepo.GetPrice(ctx, stockName)
 	if err != nil {
-		return err
+		text = err.Error()
+	} else {
+		text = domain.CreateBotMessage(msg.Text, price)
 	}
-	message.Text = domain.CreateBotMessage(message.Text, price)
-
+	message := domain.NewMessage(msg.Room, domain.BotUsername, text, time.Now().UTC())
 	return uc.publisher.Publish(ctx, message, domain.BotMessageType)
 }

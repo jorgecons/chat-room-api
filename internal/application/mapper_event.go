@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"chat-room-api/internal/core/adapter/sockethandler"
 	"chat-room-api/internal/core/domain"
@@ -29,13 +28,12 @@ func (a *App) MapEventRoutes() *App {
 				if d.Type == domain.StockMessageType {
 					err := a.handlers.ConsumeBotMessageHandler(ctx, d.Body)
 					if err != nil {
-						logrus.Warnln("Channel closed, stopping consumer.")
+						return
 					}
 				}
 				if d.Type == domain.BotMessageType {
 					msg := sockethandler.Message{}
 					_ = json.Unmarshal(d.Body, &msg)
-					msg.Date = time.Now()
 					a.socket.broadcast <- msg
 				}
 

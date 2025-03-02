@@ -40,12 +40,12 @@ func (uc *UseCase) Login(ctx context.Context, user domain.User) (string, error) 
 	}
 	err = domain.ValidatePassword(savedUser.Password, user.Password)
 	if err != nil {
-		logrus.WithContext(ctx).WithError(err).WithField("user", user.Username).Error("Error login user")
+		logrus.WithContext(ctx).WithError(err).WithField("user", user.Username).Error("Error validating password")
 		return ZeroToken, domain.ErrInvalidPassword
 	}
 	token, err := domain.GenerateToken(uc.jwtToken, user.Username)
 	if err != nil {
-		logrus.WithContext(ctx).WithField("user", user.Username).Error("Error login user")
+		logrus.WithContext(ctx).WithField("user", user.Username).Error("Error generating token")
 		return ZeroToken, domain.ErrInvalidPassword
 	}
 	return token, nil

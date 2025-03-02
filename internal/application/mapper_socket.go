@@ -1,8 +1,9 @@
 package application
 
 import (
-	"log"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 
 	"chat-room-api/internal/core/adapter/sockethandler"
 
@@ -28,7 +29,7 @@ func (a *App) buildHandler(broadcast chan sockethandler.Message) gin.HandlerFunc
 	return func(c *gin.Context) {
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
-			log.Println("WebSocket upgrade error:", err)
+			logrus.WithContext(c).WithError(err).Error("WebSocket upgrade error")
 			return
 		}
 		defer func() { _ = conn.Close() }()

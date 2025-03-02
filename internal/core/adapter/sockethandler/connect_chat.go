@@ -2,7 +2,6 @@ package sockethandler
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"chat-room-api/internal/core/domain"
@@ -13,21 +12,22 @@ import (
 )
 
 type (
-	GetLastMessages interface {
-		GetLastMessages(context.Context, string) ([]domain.Message, error)
+	ConnectChatFeature interface {
+		ConnectChat(context.Context, string) ([]domain.Message, error)
 	}
+
 	connectChat struct {
-		getLastMessages GetLastMessages
-		mutex           sync.Mutex
-		jwtSecret       []byte
+		feature   ConnectChatFeature
+		mutex     sync.Mutex
+		jwtSecret []byte
 	}
 )
 
-func NewConnectChat(lm GetLastMessages, jwtSecret []byte) HandlerFunc {
+func NewConnectChat(f ConnectChatFeature, jwtSecret []byte) HandlerFunc {
 	handler := connectChat{
-		getLastMessages: lm,
-		mutex:           sync.Mutex{},
-		jwtSecret:       jwtSecret,
+		feature:   f,
+		mutex:     sync.Mutex{},
+		jwtSecret: jwtSecret,
 	}
 	handlerFunc := func(c *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
 		return handler.handle(c, conn, broadcast)
@@ -43,7 +43,7 @@ func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast c
 	if tokenString == "" {
 		logrus.WithContext(ctx).WithField("room", room).Error("Missing Token")
 		err := BuildErrorMessage(room, InvalidTokenMsg)
-		_ = conn.WriteJSON(err)
+		_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
 		return err
 	}
 
@@ -51,7 +51,7 @@ func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast c
 	if err != nil {
 		logrus.WithContext(ctx).WithError(err).WithField("room", room).Error(InvalidTokenMsg)
 		err = BuildErrorMessage(room, InvalidTokenMsg)
-		_ = conn.WriteJSON(err)
+		_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
 		return err
 	}
 	ctx.Set(UserContextKey, claims["username"].(string))
@@ -66,24 +66,27 @@ func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast c
 	}
 	Chatrooms[room][conn] = true
 	c.mutex.Unlock()
-	// TODO: refactor
-	lm, _ := c.getLastMessages.GetLastMessages(ctx, room)
-	for i := len(lm) - 1; i >= 0; i = i - 1 {
-		broadcast <- BuildSocketMessage(lm[i])
+
+	msgs, err := c.feature.ConnectChat(ctx, room)
+	if err != nil {
+		_ = socketResponseAsJson(conn, BuildErrorMessage(room, err.Error()).Message)
+		return err
+	}
+
+	for _, m := range msgs {
+		_ = socketResponseAsJson(conn, BuildSocketMessage(m))
 	}
 	return nil
 }
 
-func HandleMessages(broadcast chan Message) {
+func HandleMessages(mutex *sync.Mutex, broadcast chan Message) {
 	for {
 		msg := <-broadcast
 		for client := range Chatrooms[msg.Room] {
-			err := client.WriteJSON(msg)
-			if err != nil {
-				// TODO improve
-				log.Println("Write error:", err)
-				_ = client.Close()
+			if err := socketResponseAsJson(client, msg); err != nil {
+				mutex.Lock()
 				delete(Chatrooms[msg.Room], client)
+				mutex.Unlock()
 			}
 		}
 	}

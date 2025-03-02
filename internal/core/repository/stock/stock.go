@@ -5,10 +5,13 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"chat-room-api/internal/core/domain"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -33,20 +36,24 @@ func (r *Repo) GetPrice(ctx context.Context, stockID string) (float64, error) {
 	if resp.StatusCode() >= http.StatusBadRequest {
 		return 0, errors.New("error")
 	}
-	fmt.Println(string(resp.Body()))
 	reader := csv.NewReader(strings.NewReader(resp.String()))
 	_, err = reader.Read()
 	if err != nil {
-		log.Println("CSV Read Error:", err)
-		return 0, errors.New("invalid stock code")
+		logrus.WithContext(ctx).WithError(err).WithField("stock", stockID).Error("error getting stock price")
+		return 0, domain.WrapError(domain.ErrGettingStockPrice, err)
 	}
 
 	record, err := reader.Read()
 	if err != nil {
-		return 0, errors.New("invalid stock code")
+		logrus.WithContext(ctx).WithError(err).WithField("stock", stockID).Error("error reading stock price")
+		return 0, domain.WrapError(domain.ErrGettingStockPrice, err)
 	}
 
 	stockPrice := record[6]
+	if stockPrice == nilValue {
+		logrus.WithContext(ctx).WithField("stock", stockID).Error("stock price is nil")
+		return 0, domain.ErrStockPriceNotFound
+	}
 	stockPriceFloat, _ := strconv.ParseFloat(stockPrice, 64)
 
 	return stockPriceFloat, nil

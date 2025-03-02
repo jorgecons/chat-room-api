@@ -2,7 +2,6 @@ package message
 
 import (
 	"context"
-	"time"
 
 	"chat-room-api/internal/core/domain"
 
@@ -32,7 +31,7 @@ func (r *Storage) Save(ctx context.Context, msg domain.Message) error {
 		msg.Room,
 		msg.Username,
 		msg.Text,
-		time.Now(),
+		msg.Date,
 	)
 	if err != nil {
 		return domain.WrapError(domain.ErrSavingMessage, err)
@@ -43,7 +42,7 @@ func (r *Storage) Save(ctx context.Context, msg domain.Message) error {
 func (r *Storage) GetLastMessages(ctx context.Context, room string) ([]domain.Message, error) {
 	rows, err := r.client.Query(ctx, sqlSearch, room)
 	if err != nil {
-		return nil, err
+		return nil, domain.WrapError(domain.ErrGettingMessages, err)
 	}
 	defer rows.Close()
 
@@ -51,7 +50,7 @@ func (r *Storage) GetLastMessages(ctx context.Context, room string) ([]domain.Me
 	for rows.Next() {
 		var msg message
 		if err = rows.Scan(&msg.Room, &msg.Username, &msg.Text, &msg.Date); err != nil {
-			return nil, err
+			return nil, domain.WrapError(domain.ErrGettingMessages, err)
 		}
 
 		messages = append(messages, domain.NewMessage(msg.Room, msg.Username, msg.Text, msg.Date))

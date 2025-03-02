@@ -1,0 +1,16 @@
+# INFO about configurate a mock of mockery: https://vektra.github.io/mockery/latest/configuration/#parameter-descriptions
+disable-version-string: True
+keeptree: False
+inpackage: False
+outpkg: "mocks"
+filename: "{{ .InterfaceName | camelcase | firstUpper }}.go"
+mockname: "{{ .InterfaceName | camelcase | firstUpper }}"
+quiet: False
+dry-run: False
+with-expecter: True
+all: True
+dir: "{{.InterfaceDirRelative}}/mocks"
+recursive: False
+log-level: error
+packages:
+#chat-room-api/internal/core/usecase/:

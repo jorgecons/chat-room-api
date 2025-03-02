@@ -2,18 +2,16 @@ package application
 
 import (
 	"os"
-	"time"
 )
 
 type (
 	configuration struct {
-		RouterURL     string        `json:"router_url"`
-		RabbitURL     string        `json:"rabbit_url"`
-		RabbitQueue   string        `json:"rabbit_queue"`
-		RabbitTimeOut time.Duration `json:"rabbit_time_out"`
-		DatabaseURL   string        `json:"database_url"`
-		StockPriceURL string        `json:"stock_price_url"`
-		JWTSecret     string        `json:"-"`
+		RouterURL     string `json:"router_url"`
+		RabbitURL     string `json:"rabbit_url"`
+		RabbitQueue   string `json:"rabbit_queue"`
+		DatabaseURL   string `json:"database_url"`
+		StockPriceURL string `json:"stock_price_url"`
+		JWTSecret     string `json:"-"`
 	}
 )
 
@@ -34,7 +32,6 @@ func (a *App) BuildConfiguration() *App {
 		RouterURL:     os.Getenv(routerURLEnv),
 		RabbitURL:     os.Getenv(rabbitURLEnv),
 		RabbitQueue:   os.Getenv(rabbitQueueEnv),
-		RabbitTimeOut: consumerTimeOut,
 		DatabaseURL:   os.Getenv(databaseURLEnv),
 		StockPriceURL: os.Getenv(stockPriceURLEnv),
 		JWTSecret:     os.Getenv(JWTSecretEnv),

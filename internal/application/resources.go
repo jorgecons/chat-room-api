@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 
+	"chat-room-api/internal/core/usecase/connectchatusecase"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
 	"github.com/jackc/pgx/v5"
@@ -21,7 +23,6 @@ import (
 	"chat-room-api/internal/core/usecase/chatusecase"
 	"chat-room-api/internal/core/usecase/createaccountusecase"
 	"chat-room-api/internal/core/usecase/loginusecase"
-	"chat-room-api/internal/core/usecase/stockusecase"
 )
 
 type (
@@ -46,15 +47,15 @@ func (a *App) BuildHandlers() *App {
 	messageStorage := message.NewMessageStorage(dbClient)
 	userStorage := user.NewUserStorage(dbClient)
 
-	chatUseCase := chatusecase.NewUseCase(messageStorage)
-	publishStockUseCase := stockusecase.NewUseCase(publisherRepo)
+	chatUseCase := chatusecase.NewUseCase(messageStorage, publisherRepo)
 	botUseCase := botusecase.NewUseCase(stockRepo, publisherRepo)
 	createAccountUseCase := createaccountusecase.NewUseCase(userStorage)
 	loginUseCase := loginusecase.NewUseCase(userStorage, []byte(a.configuration.JWTSecret))
+	connectChat := connectchatusecase.NewUseCase(messageStorage)
 
 	a.handlers = Handlers{
-		ConnectChatHandler:       sockethandler.NewConnectChat(messageStorage, secret),
-		ChatHandler:              sockethandler.NewChat(chatUseCase, publishStockUseCase, secret),
+		ConnectChatHandler:       sockethandler.NewConnectChat(connectChat, secret),
+		ChatHandler:              sockethandler.NewChat(chatUseCase, secret),
 		PostMessageHandler:       sockethandler.HandleMessages,
 		ConsumeBotMessageHandler: eventhandler.NewBotHandler(botUseCase),
 		CreateAccountHandler:     webhandler.NewCreateAccount(createAccountUseCase),

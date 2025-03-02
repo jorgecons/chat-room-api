@@ -3,9 +3,10 @@ package publisher
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"chat-room-api/internal/core/domain"
+
+	"github.com/sirupsen/logrus"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -26,20 +27,24 @@ func NewPublisher(ch *amqp.Channel, queueName string) *Publisher {
 
 func (p *Publisher) Publish(ctx context.Context, msg domain.Message, messageType string) error {
 	body, _ := json.Marshal(msg)
-	fmt.Println("sending", body)
 	err := p.ch.Publish(
 		"",
 		p.queueName,
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: "application/json",
+			ContentType: jsonContentTypeHeader,
 			Body:        body,
 			Type:        messageType,
 		},
 	)
 	if err != nil {
-		fmt.Println("error ", err)
+		logrus.WithContext(ctx).
+			WithError(err).
+			WithField("room", msg.Room).
+			WithField("stock", msg.Text).
+			Error("Error publishing message to the bot")
+		return domain.WrapError(domain.ErrPublishingMessage, err)
 	}
-	return err
+	return nil
 }

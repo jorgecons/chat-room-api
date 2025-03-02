@@ -25,18 +25,18 @@ func NewLogin(f LoginFeature) gin.HandlerFunc {
 	handlerFunc := func(c *gin.Context) {
 		user := User{}
 		if err := c.ShouldBindBodyWithJSON(&user); err != nil {
-			c.AbortWithStatus(http.StatusBadRequest)
+			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, BadRequestErrorCode))
 			return
 		}
 		if err := ValidateAccountRequest(user); err != nil {
 			logrus.WithContext(c).WithError(err).Error("Invalid request")
-			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(InvalidUserCode, err))
+			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, InvalidUserErrorCode))
 			return
 		}
 
 		token, err := handler.feature.Login(c, BuildUser(user))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, BuildErrorResponse(InvalidUserCode, err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, BuildErrorResponse(err, InvalidUserErrorCode))
 			return
 		}
 

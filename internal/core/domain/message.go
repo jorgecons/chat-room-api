@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -9,6 +10,8 @@ const (
 	BotMessage       = "%s quote is $%f per share."
 	StockMessageType = "stock"
 	BotMessageType   = "bot"
+	BotUsername      = "bot"
+	StockPrefix      = "/stock="
 )
 
 type Message struct {
@@ -29,4 +32,8 @@ func NewMessage(room, username, text string, date time.Time) Message {
 
 func CreateBotMessage(stockName string, price float64) string {
 	return fmt.Sprintf(BotMessage, stockName, price)
+}
+
+func GetStockName(text string) string {
+	return strings.TrimPrefix(text, StockPrefix)
 }

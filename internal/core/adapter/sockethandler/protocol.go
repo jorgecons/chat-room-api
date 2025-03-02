@@ -2,7 +2,8 @@ package sockethandler
 
 import (
 	"errors"
-	"strings"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"chat-room-api/internal/core/domain"
@@ -22,10 +23,10 @@ var (
 
 const (
 	UserContextKey  = "user"
-	UnknownCommand  = "Unknown command: %s"
 	SystemUser      = "System"
 	TokenHeader     = "X-Access-Token"
 	InvalidTokenMsg = "Invalid Token"
+	textFormat      = "%s@room_%s: %s at %s"
 )
 
 type (
@@ -47,10 +48,15 @@ func (e ErrorMessage) Error() string {
 }
 
 func BuildMessage(message Message) domain.Message {
+	t := message.Date
+	if t.IsZero() {
+		t = time.Now().UTC()
+	}
 	return domain.Message{
 		Room:     message.Room,
 		Username: message.Username,
 		Text:     message.Text,
+		Date:     t,
 	}
 }
 
@@ -69,13 +75,9 @@ func BuildErrorMessage(room, text string) ErrorMessage {
 			Room:     room,
 			Username: SystemUser,
 			Text:     text,
-			Date:     time.Now(),
+			Date:     time.Now().UTC(),
 		},
 	}
-}
-
-func GetStockName(text string) string {
-	return strings.TrimPrefix(text, "/stock=")
 }
 
 func ValidateRoom(room string, message Message) error {
@@ -108,4 +110,29 @@ func validateJWT(secret []byte, tokenString string) (jwt.MapClaims, error) {
 	}
 
 	return nil, errors.New("invalid token")
+}
+
+func socketResponseAsJson(client *websocket.Conn, msg Message) error {
+	err := client.WriteJSON(msg)
+	if err != nil {
+		logrus.
+			WithError(err).
+			WithField("username", msg.Username).
+			Error("error writing message")
+		_ = client.Close()
+	}
+	return err
+}
+
+func socketResponseAsText(client *websocket.Conn, msg Message) error {
+	t := fmt.Sprintf(textFormat, msg.Username, msg.Room, msg.Text, msg.Date)
+	err := client.WriteMessage(websocket.TextMessage, []byte(t))
+	if err != nil {
+		logrus.
+			WithError(err).
+			WithField("username", msg.Username).
+			Error("error writing message")
+		_ = client.Close()
+	}
+	return err
 }

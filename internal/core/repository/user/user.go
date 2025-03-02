@@ -28,7 +28,7 @@ func NewUserStorage(dbClient *pgx.Conn) *Storage {
 	}
 }
 
-// It can be improved by clasifficating the client error in different types
+// it can be improved by classifying the client errors in different types
 func (s *Storage) Save(ctx context.Context, user domain.User) error {
 	_, err := s.client.Exec(ctx, sqlSaveUser, user.Username, user.Password)
 	if err != nil {

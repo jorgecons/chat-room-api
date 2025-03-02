@@ -7,7 +7,9 @@ import (
 	"chat-room-api/shared/checker"
 )
 
-const InvalidUserCode = "invalid_user"
+const InvalidUserErrorCode = "invalid_user_error"
+const CreateUserErrorCode = "create_user_error"
+const BadRequestErrorCode = "bad_request"
 
 var ErrFailedValidations = errors.New("failed validations over the message")
 
@@ -37,7 +39,7 @@ func BuildUser(user User) domain.User {
 	}
 }
 
-func BuildErrorResponse(code string, err error) Error {
+func BuildErrorResponse(err error, code string) Error {
 	return Error{
 		Message: err.Error(),
 		Code:    code,
@@ -46,8 +48,7 @@ func BuildErrorResponse(code string, err error) Error {
 
 func ValidateAccountRequest(user User) error {
 	if err := checker.Check(user); err != nil {
-		msg := domain.WrapError(ErrFailedValidations, err)
-		return BuildErrorResponse(InvalidUserCode, msg)
+		return domain.WrapError(ErrFailedValidations, err)
 	}
 	return nil
 }
