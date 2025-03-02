@@ -2,6 +2,7 @@ package stockusecase
 
 import (
 	"context"
+	"time"
 
 	"chat-room-api/internal/core/domain"
 )
@@ -29,6 +30,7 @@ func (uc *UseCase) Stock(ctx context.Context, room, stock string) error {
 		Room:     room,
 		Username: "bot",
 		Text:     stock,
+		Date:     time.Now(),
 	}
 	return uc.stockPublisher.Publish(ctx, msg, domain.StockMessageType)
 }

@@ -15,6 +15,7 @@ import (
 
 var (
 	InvalidRoomError = errors.New("invalid room")
+	InvalidUserError = errors.New("invalid user")
 	ChatroomError    = errors.New("error connecting to chat room")
 	Chatrooms        = make(map[string]map[*websocket.Conn]bool)
 )
@@ -88,7 +89,7 @@ func ValidateUsername(username string, message Message) error {
 	if username == message.Username {
 		return nil
 	}
-	return InvalidRoomError
+	return InvalidUserError
 }
 
 func validateJWT(secret []byte, tokenString string) (jwt.MapClaims, error) {

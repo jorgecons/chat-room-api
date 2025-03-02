@@ -51,7 +51,7 @@ func (c *chat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast chan Mes
 		username := ctx.Value(UserContextKey).(string)
 		if err = ValidateUsername(username, msg); err != nil {
 			logrus.WithContext(ctx).WithField("username", msg.Username).WithError(err).Errorln("Error validating user")
-			_ = conn.WriteJSON(BuildErrorMessage(msg.Username, err.Error()))
+			_ = conn.WriteJSON(BuildErrorMessage(room, err.Error()))
 			continue
 		}
 		if err = ValidateRoom(room, msg); err != nil {

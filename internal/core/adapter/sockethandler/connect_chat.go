@@ -54,7 +54,7 @@ func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast c
 		_ = conn.WriteJSON(err)
 		return err
 	}
-	context.WithValue(ctx, UserContextKey, claims["username"].(string))
+	ctx.Set(UserContextKey, claims["username"].(string))
 
 	if room == "" {
 		logrus.WithContext(ctx).Error("Error missing room")

@@ -36,6 +36,6 @@ func (a *App) buildHandler(broadcast chan sockethandler.Message) gin.HandlerFunc
 		if err = a.handlers.ConnectChatHandler(c, conn, broadcast); err != nil {
 			return
 		}
-		a.handlers.ChatHandler(c, conn, broadcast)
+		_ = a.handlers.ChatHandler(c, conn, broadcast)
 	}
 }
