@@ -5,11 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jackc/pgx/v4"
-
 	"chat-room-api/internal/core/domain"
 	"chat-room-api/internal/core/repository/user"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/pashagolub/pgxmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

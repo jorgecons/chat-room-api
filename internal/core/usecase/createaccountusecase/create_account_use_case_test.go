@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"chat-room-api/internal/core/domain"
-
 	"chat-room-api/internal/core/usecase/createaccountusecase"
 	"chat-room-api/internal/core/usecase/createaccountusecase/mocks"
 

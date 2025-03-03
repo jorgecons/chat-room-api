@@ -3,9 +3,9 @@ package loginusecase
 import (
 	"context"
 
-	"github.com/sirupsen/logrus"
-
 	"chat-room-api/internal/core/domain"
+
+	"github.com/sirupsen/logrus"
 )
 
 const ZeroToken = ""

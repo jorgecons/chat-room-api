@@ -11,9 +11,8 @@ import (
 
 	"chat-room-api/internal/core/domain"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/go-resty/resty/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type (

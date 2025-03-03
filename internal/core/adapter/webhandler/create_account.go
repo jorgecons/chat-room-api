@@ -4,11 +4,10 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"chat-room-api/internal/core/domain"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type (

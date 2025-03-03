@@ -3,12 +3,12 @@ package application
 import (
 	"context"
 
+	"chat-room-api/internal/core/adapter/sockethandler"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
-
-	"chat-room-api/internal/core/adapter/sockethandler"
 )
 
 const (

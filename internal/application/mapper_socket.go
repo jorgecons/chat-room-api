@@ -3,12 +3,11 @@ package application
 import (
 	"net/http"
 
-	"github.com/sirupsen/logrus"
-
 	"chat-room-api/internal/core/adapter/sockethandler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 var upgrader = websocket.Upgrader{

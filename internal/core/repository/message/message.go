@@ -3,10 +3,9 @@ package message
 import (
 	"context"
 
-	"github.com/jackc/pgconn"
-
 	"chat-room-api/internal/core/domain"
 
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 )
 

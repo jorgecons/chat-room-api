@@ -5,16 +5,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/jackc/pgconn"
-
-	"chat-room-api/internal/core/usecase/connectchatusecase"
-
-	"github.com/gin-gonic/gin"
-	"github.com/go-resty/resty/v2"
-	"github.com/jackc/pgx/v4"
-	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/sirupsen/logrus"
-
 	"chat-room-api/internal/core/adapter/eventhandler"
 	"chat-room-api/internal/core/adapter/sockethandler"
 	"chat-room-api/internal/core/adapter/webhandler"
@@ -24,8 +14,16 @@ import (
 	"chat-room-api/internal/core/repository/user"
 	"chat-room-api/internal/core/usecase/botusecase"
 	"chat-room-api/internal/core/usecase/chatusecase"
+	"chat-room-api/internal/core/usecase/connectchatusecase"
 	"chat-room-api/internal/core/usecase/createaccountusecase"
 	"chat-room-api/internal/core/usecase/loginusecase"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-resty/resty/v2"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 )
 
 type (
