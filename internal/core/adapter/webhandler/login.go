@@ -2,6 +2,7 @@ package webhandler
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -30,13 +31,17 @@ func NewLogin(f LoginFeature) gin.HandlerFunc {
 		}
 		if err := ValidateAccountRequest(user); err != nil {
 			logrus.WithContext(c).WithError(err).Error("Invalid request")
-			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, InvalidUserErrorCode))
+			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, InvalidCredentialsErrorCode))
 			return
 		}
 
 		token, err := handler.feature.Login(c, BuildUser(user))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, BuildErrorResponse(err, InvalidUserErrorCode))
+			if errors.Is(err, domain.ErrInvalidPassword) || errors.Is(err, domain.ErrInvalidUser) {
+				c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(ErrLoginError, InvalidCredentialsErrorCode))
+				return
+			}
+			c.AbortWithStatusJSON(http.StatusInternalServerError, BuildErrorResponse(err, InvalidCredentialsErrorCode))
 			return
 		}
 

@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 func (a *App) MapSocket() *App {
 	a.socket.broadcast = make(chan sockethandler.Message)
 	a.router.GET("/ws/:room", a.buildHandler(a.socket.broadcast))
-	go sockethandler.HandleMessages(a.socket.broadcast)
+	go a.handlers.BroadcastMessageHandler(a.socket.broadcast)
 	return a
 }
 

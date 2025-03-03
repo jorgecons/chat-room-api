@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"log"
+	"sync"
 
 	"chat-room-api/internal/core/usecase/connectchatusecase"
 
@@ -29,7 +30,7 @@ type (
 	Handlers struct {
 		ConnectChatHandler       sockethandler.HandlerFunc
 		ChatHandler              sockethandler.HandlerFunc
-		PostMessageHandler       func(chan sockethandler.Message)
+		BroadcastMessageHandler  func(chan sockethandler.Message)
 		ConsumeBotMessageHandler func(context.Context, []byte) error
 		CreateAccountHandler     gin.HandlerFunc
 		LoginHandler             gin.HandlerFunc
@@ -38,6 +39,7 @@ type (
 
 func (a *App) BuildHandlers() *App {
 	secret := []byte(a.configuration.JWTSecret)
+	mutex := sync.Mutex{}
 	p := NewPublisher(a.configuration)
 	stockPriceClient := resty.New().SetBaseURL(a.configuration.StockPriceURL)
 	dbClient := newDBClient(a.configuration.DatabaseURL)
@@ -48,15 +50,15 @@ func (a *App) BuildHandlers() *App {
 	userStorage := user.NewUserStorage(dbClient)
 
 	chatUseCase := chatusecase.NewUseCase(messageStorage, publisherRepo)
-	botUseCase := botusecase.NewUseCase(stockRepo, publisherRepo)
+	botUseCase := botusecase.NewUseCase(stockRepo, messageStorage, publisherRepo)
 	createAccountUseCase := createaccountusecase.NewUseCase(userStorage)
 	loginUseCase := loginusecase.NewUseCase(userStorage, []byte(a.configuration.JWTSecret))
 	connectChat := connectchatusecase.NewUseCase(messageStorage)
 
 	a.handlers = Handlers{
-		ConnectChatHandler:       sockethandler.NewConnectChat(connectChat, secret),
-		ChatHandler:              sockethandler.NewChat(chatUseCase, secret),
-		PostMessageHandler:       sockethandler.HandleMessages,
+		ConnectChatHandler:       sockethandler.NewConnectChat(connectChat, &mutex, secret),
+		ChatHandler:              sockethandler.NewChat(chatUseCase, &mutex, secret),
+		BroadcastMessageHandler:  sockethandler.BroadcastMessagesHandler(&mutex),
 		ConsumeBotMessageHandler: eventhandler.NewBotHandler(botUseCase),
 		CreateAccountHandler:     webhandler.NewCreateAccount(createAccountUseCase),
 		LoginHandler:             webhandler.NewLogin(loginUseCase),

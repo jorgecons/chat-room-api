@@ -13,4 +13,8 @@ dir: "{{.InterfaceDirRelative}}/mocks"
 recursive: False
 log-level: error
 packages:
-#chat-room-api/internal/core/usecase/:
+  chat-room-api/internal/core/usecase/botusecase:
+  chat-room-api/internal/core/usecase/chatusecase:
+  chat-room-api/internal/core/usecase/connectchatusecase:
+  chat-room-api/internal/core/usecase/createaccountusecase:
+  chat-room-api/internal/core/usecase/loginusecase:

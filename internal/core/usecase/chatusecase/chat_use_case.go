@@ -9,26 +9,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var zeroMessage domain.Message
-
 type (
 	UseCase struct {
-		messageStorage messageRepository
-		stockPublisher stockPublisher
+		messageStorage MessageRepository
+		stockPublisher StockPublisher
 	}
 
-	stockPublisher interface {
+	StockPublisher interface {
 		Publish(context.Context, domain.Message, string) error
 	}
 
-	messageRepository interface {
+	MessageRepository interface {
 		Save(context.Context, domain.Message) error
 	}
 )
 
 func NewUseCase(
-	messageStorage messageRepository,
-	publisher stockPublisher,
+	messageStorage MessageRepository,
+	publisher StockPublisher,
 ) *UseCase {
 	return &UseCase{
 		messageStorage: messageStorage,

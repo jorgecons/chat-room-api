@@ -7,11 +7,14 @@ import (
 	"chat-room-api/shared/checker"
 )
 
-const InvalidUserErrorCode = "invalid_user_error"
-const CreateUserErrorCode = "create_user_error"
-const BadRequestErrorCode = "bad_request"
+const (
+	InvalidCredentialsErrorCode = "invalid_credentials_error"
+	CreateUserErrorCode         = "create_user_error"
+	BadRequestErrorCode         = "bad_request"
+)
 
 var ErrFailedValidations = errors.New("failed validations over the message")
+var ErrLoginError = errors.New("error login")
 
 type (
 	User struct {

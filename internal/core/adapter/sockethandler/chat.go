@@ -3,6 +3,7 @@ package sockethandler
 import (
 	"chat-room-api/internal/core/domain"
 	"context"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -16,13 +17,15 @@ type (
 
 	chat struct {
 		chatFeature ChatFeature
+		mutex       *sync.Mutex
 		jwtSecret   []byte
 	}
 )
 
-func NewChat(cf ChatFeature, jwtSecret []byte) HandlerFunc {
+func NewChat(cf ChatFeature, m *sync.Mutex, jwtSecret []byte) HandlerFunc {
 	handler := chat{
 		chatFeature: cf,
+		mutex:       m,
 		jwtSecret:   jwtSecret,
 	}
 	handlerFunc := func(c *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
@@ -32,13 +35,13 @@ func NewChat(cf ChatFeature, jwtSecret []byte) HandlerFunc {
 }
 
 func (c *chat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
+	room := ctx.Param("room")
 	for {
-		room := ctx.Param("room")
 		var msg Message
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			logrus.WithContext(ctx).WithError(err).WithField("room", room).Errorln("Error reading message")
-			continue
+			break
 		}
 		username := ctx.Value(UserContextKey).(string)
 		if err = ValidateUsername(username, msg); err != nil {
@@ -62,4 +65,9 @@ func (c *chat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast chan Mes
 
 		broadcast <- msg
 	}
+
+	c.mutex.Lock()
+	delete(Chatrooms[room], conn)
+	c.mutex.Unlock()
+	return nil
 }

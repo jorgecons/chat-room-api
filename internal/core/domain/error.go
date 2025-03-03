@@ -5,10 +5,7 @@ import (
 	"fmt"
 )
 
-const UnknownCommand = "Unknown command: %s"
-
 var (
-
 	// Password
 	ErrHashingPassword = errors.New("error hashing password")
 	ErrInvalidPassword = errors.New("invalid password")

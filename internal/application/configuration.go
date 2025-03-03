@@ -22,9 +22,6 @@ const (
 	databaseURLEnv   = "DB_URL"
 	stockPriceURLEnv = "STOCK_PRICE_URL"
 	JWTSecretEnv     = "JWT_SECRET"
-
-	consumerTimeOut = 30 // should be a configuration
-
 )
 
 func (a *App) BuildConfiguration() *App {

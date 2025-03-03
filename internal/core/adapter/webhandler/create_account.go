@@ -30,7 +30,7 @@ func NewCreateAccount(f CreateAccountFeature) gin.HandlerFunc {
 		}
 		if err := ValidateAccountRequest(user); err != nil {
 			logrus.WithContext(c).WithError(err).Error("Invalid request")
-			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, InvalidUserErrorCode))
+			c.AbortWithStatusJSON(http.StatusBadRequest, BuildErrorResponse(err, InvalidCredentialsErrorCode))
 			return
 		}
 

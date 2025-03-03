@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        #chat-container {
+            width: 60%;
+            margin: auto;
+            text-align: left;
+        }
+        #chat-box {
+            height: 300px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            background: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 5px 0;
+            max-width: 80%;
+        }
+        .my-message {
+            background: #d1e7dd;
+            align-self: flex-end;
+        }
+        .username {
+            font-weight: bold;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<input type="text" id="room" placeholder="Room">
+<button onclick="login()">Login</button>
+
+<h2>Chat</h2>
+<div id="chat-container">
+    <div id="chat-box"></div>
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<script>
+    let ws;
+    let token = localStorage.getItem("jwt");
+    let room;
+    let username;
+
+    async function login() {
+        username = document.getElementById("username").value;
+        let password = document.getElementById("password").value;
+        room = document.getElementById("room").value;
+
+        const response = await fetch("http://localhost:8080/login", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({username, password})
+        });
+
+        const data = await response.json();
+        if (data.token) {
+            localStorage.setItem("jwt", data.token);
+            token = data.token;
+            connectWebSocket();
+        } else {
+            alert("Login failed!");
+        }
+    }
+
+    function connectWebSocket() {
+        if (!token) {
+            alert("You must log in first!");
+            return;
+        }
+
+        ws = new WebSocket(`ws://localhost:8080/ws/${room}?token=${token}`);
+        ws.onmessage = (event) => {
+            let messageData = JSON.parse(event.data);
+            displayMessage(messageData);
+        };
+    }
+
+    function sendMessage() {
+        const msg = document.getElementById("message").value;
+        ws.send(JSON.stringify({ text: msg, room: room, username: username }));
+        document.getElementById("message").value = "";
+    }
+
+    function displayMessage({ username, text, date }) {
+        const chatBox = document.getElementById("chat-box");
+        let messageDiv = document.createElement("div");
+        messageDiv.classList.add("message");
+        if (username === localStorage.getItem("username")) {
+            messageDiv.classList.add("my-message");
+        }
+
+        messageDiv.innerHTML = `<span class="username">${username}</span>: ${text} <br>
+                                <span class="timestamp">${new Date(date).toLocaleString()}</span>`;
+
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll
+    }
+</script>
+
+</body>
+</html>

@@ -17,14 +17,13 @@ import (
 var (
 	InvalidRoomError = errors.New("invalid room")
 	InvalidUserError = errors.New("invalid user")
-	ChatroomError    = errors.New("error connecting to chat room")
 	Chatrooms        = make(map[string]map[*websocket.Conn]bool)
 )
 
 const (
 	UserContextKey  = "user"
 	SystemUser      = "System"
-	TokenHeader     = "X-Access-Token"
+	TokenQuery      = "token"
 	InvalidTokenMsg = "Invalid Token"
 	textFormat      = "%s@room_%s: %s at %s"
 )

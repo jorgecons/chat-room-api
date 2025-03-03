@@ -18,15 +18,15 @@ type (
 
 	connectChat struct {
 		feature   ConnectChatFeature
-		mutex     sync.Mutex
+		mutex     *sync.Mutex
 		jwtSecret []byte
 	}
 )
 
-func NewConnectChat(f ConnectChatFeature, jwtSecret []byte) HandlerFunc {
+func NewConnectChat(f ConnectChatFeature, m *sync.Mutex, jwtSecret []byte) HandlerFunc {
 	handler := connectChat{
 		feature:   f,
-		mutex:     sync.Mutex{},
+		mutex:     m,
 		jwtSecret: jwtSecret,
 	}
 	handlerFunc := func(c *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
@@ -35,10 +35,10 @@ func NewConnectChat(f ConnectChatFeature, jwtSecret []byte) HandlerFunc {
 	return handlerFunc
 }
 
-func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast chan Message) error {
+func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, _ chan Message) error {
 	var (
 		room        = ctx.Param("room")
-		tokenString = ctx.GetHeader(TokenHeader)
+		tokenString = ctx.Query(TokenQuery)
 	)
 	if tokenString == "" {
 		logrus.WithContext(ctx).WithField("room", room).Error("Missing Token")
@@ -77,17 +77,4 @@ func (c *connectChat) handle(ctx *gin.Context, conn *websocket.Conn, broadcast c
 		_ = socketResponseAsJson(conn, BuildSocketMessage(m))
 	}
 	return nil
-}
-
-func HandleMessages(mutex *sync.Mutex, broadcast chan Message) {
-	for {
-		msg := <-broadcast
-		for client := range Chatrooms[msg.Room] {
-			if err := socketResponseAsJson(client, msg); err != nil {
-				mutex.Lock()
-				delete(Chatrooms[msg.Room], client)
-				mutex.Unlock()
-			}
-		}
-	}
 }

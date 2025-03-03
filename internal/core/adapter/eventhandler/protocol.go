@@ -10,8 +10,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var InvalidRoomError = errors.New("invalid room")
-
 type (
 	Handler func(*gin.Context, *websocket.Conn, chan Message)
 	Message struct {
@@ -32,13 +30,5 @@ func BuildMessage(message Message) domain.Message {
 		Username: message.Username,
 		Text:     message.Text,
 		Date:     t,
-	}
-}
-
-func CreateErrorMessage(room, text string) Message {
-	return Message{
-		Room:     room,
-		Username: "System",
-		Text:     "Unknown command: " + text,
 	}
 }

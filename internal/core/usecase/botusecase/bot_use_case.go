@@ -2,6 +2,7 @@ package botusecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"chat-room-api/internal/core/domain"
@@ -9,12 +10,17 @@ import (
 
 type (
 	UseCase struct {
-		stockRepo stockRepository
-		publisher Publisher
+		stockRepo         StockRepository
+		messageRepository MessageRepository
+		publisher         Publisher
 	}
 
-	stockRepository interface {
+	StockRepository interface {
 		GetPrice(context.Context, string) (float64, error)
+	}
+
+	MessageRepository interface {
+		Save(context.Context, domain.Message) error
 	}
 
 	Publisher interface {
@@ -23,26 +29,30 @@ type (
 )
 
 func NewUseCase(
-	sr stockRepository,
+	sr StockRepository,
+	mr MessageRepository,
 	p Publisher,
 ) *UseCase {
 	return &UseCase{
-		stockRepo: sr,
-		publisher: p,
+		stockRepo:         sr,
+		messageRepository: mr,
+		publisher:         p,
 	}
 }
 
 func (uc *UseCase) Bot(ctx context.Context, msg domain.Message) error {
 	var (
-		text      string
+		message   = domain.NewMessage(msg.Room, domain.BotUsername, "", time.Now().UTC())
 		stockName = domain.GetStockName(msg.Text)
 	)
 	price, err := uc.stockRepo.GetPrice(ctx, stockName)
 	if err != nil {
-		text = err.Error()
+		message.Text = fmt.Sprintf("%s: %s", stockName, err.Error())
 	} else {
-		text = domain.CreateBotMessage(msg.Text, price)
+		message.Text = domain.CreateBotMessage(msg.Text, price)
+		if err = uc.messageRepository.Save(ctx, message); err != nil {
+			message.Text = fmt.Sprintf("%s: %s", stockName, err.Error())
+		}
 	}
-	message := domain.NewMessage(msg.Room, domain.BotUsername, text, time.Now().UTC())
 	return uc.publisher.Publish(ctx, message, domain.BotMessageType)
 }
