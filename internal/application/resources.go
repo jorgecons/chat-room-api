@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"log"
 	"sync"
 
 	"chat-room-api/internal/core/adapter/eventhandler"
@@ -98,12 +97,12 @@ func connectDB(url string) (querier, error) {
 func NewPublisher(config configuration) *amqp.Channel {
 	conn, err := amqp.Dial(config.RabbitURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
+		logrus.WithError(err).Panic("Failed to connect to RabbitMQ")
 	}
 
 	ch, err := conn.Channel()
 	if err != nil {
-		log.Fatalf("Failed to open a channel: %v", err)
+		logrus.WithError(err).Panic("Failed to open a channel")
 	}
 
 	_, err = ch.QueueDeclare(
@@ -115,7 +114,7 @@ func NewPublisher(config configuration) *amqp.Channel {
 		nil,   // Arguments
 	)
 	if err != nil {
-		log.Fatalf("Failed to declare queue: %v", err)
+		logrus.WithError(err).Panic("Failed to declare queue")
 	}
 	return ch
 }

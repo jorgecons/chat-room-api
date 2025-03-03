@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"os"
+	"time"
 
 	"chat-room-api/internal/core/adapter/sockethandler"
 
@@ -50,18 +52,29 @@ func (a *App) configureContext() {
 }
 
 func (a *App) BuildConsumer() *App {
-	// Step 1: Connect to RabbitMQ
-	conn, err := amqp.Dial(a.configuration.RabbitURL)
-	if err != nil {
-		logrus.WithContext(a.context).WithError(err).Fatalln("Failed to connect to RabbitMQ")
-	}
+	var (
+		maxRetries = 10
+		conn       *amqp.Connection
+		err        error
+	)
 
+	for i := 0; i < maxRetries && conn == nil; i++ {
+		conn, err = amqp.Dial(os.Getenv("RABBITMQ_URL"))
+		if err == nil {
+			break
+		}
+		t := time.Duration(i*2) * time.Second
+		logrus.Printf("RabbitMQ not available, retrying... (%d/%d) wait %s", i+1, maxRetries, t)
+		time.Sleep(t) // Exponential backoff
+	}
+	if conn == nil {
+		logrus.WithError(err).Panic("Failed to open a channel")
+	}
 	// Step 2: Create a channel
 	ch, err := conn.Channel()
 	if err != nil {
-		logrus.Fatalf("Failed to open a channel: %v", err)
+		logrus.WithError(err).Panic("Failed to open a channel")
 	}
-
 	// Step 3: Declare a queue
 	q, err := ch.QueueDeclare(
 		a.configuration.RabbitQueue, // name
@@ -72,7 +85,7 @@ func (a *App) BuildConsumer() *App {
 		nil,                         // arguments
 	)
 	if err != nil {
-		logrus.Fatalf("Failed to declare a queue: %v", err)
+		logrus.WithError(err).Panic("Failed to declare a queue")
 	}
 
 	a.queueConsumer = consumer{
@@ -121,7 +134,7 @@ func (a *App) Consume() *App {
 func (a *App) Run() *App {
 	go func() {
 		if err := a.router.Run(a.configuration.RouterURL); err != nil {
-			logrus.Panic("couldn't run app", logrus.WithError(err))
+			logrus.WithError(err).Panic("couldn't run app")
 		}
 		logrus.Println(logo)
 	}()
