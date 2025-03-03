@@ -5,11 +5,13 @@ import (
 	"log"
 	"sync"
 
+	"github.com/jackc/pgconn"
+
 	"chat-room-api/internal/core/usecase/connectchatusecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 
@@ -34,6 +36,12 @@ type (
 		ConsumeBotMessageHandler func(context.Context, []byte) error
 		CreateAccountHandler     gin.HandlerFunc
 		LoginHandler             gin.HandlerFunc
+	}
+
+	querier interface {
+		Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+		Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+		QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	}
 )
 
@@ -67,7 +75,7 @@ func (a *App) BuildHandlers() *App {
 	return a
 }
 
-func newDBClient(url string) *pgx.Conn {
+func newDBClient(url string) querier {
 	db, err := connectDB(url)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Failed to connect to database")
@@ -75,7 +83,7 @@ func newDBClient(url string) *pgx.Conn {
 	return db
 }
 
-func connectDB(url string) (*pgx.Conn, error) {
+func connectDB(url string) (querier, error) {
 	connConfig, err := pgx.ParseConfig(url)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Unable to parse connection string")

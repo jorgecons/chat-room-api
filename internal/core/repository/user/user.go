@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/jackc/pgconn"
+
 	"chat-room-api/internal/core/domain"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -18,11 +20,16 @@ var zeroUser = domain.User{}
 
 type (
 	Storage struct {
-		client *pgx.Conn
+		client querier
+	}
+
+	querier interface {
+		Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+		QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 	}
 )
 
-func NewUserStorage(dbClient *pgx.Conn) *Storage {
+func NewUserStorage(dbClient querier) *Storage {
 	return &Storage{
 		client: dbClient,
 	}

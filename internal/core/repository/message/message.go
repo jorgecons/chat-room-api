@@ -3,9 +3,11 @@ package message
 import (
 	"context"
 
+	"github.com/jackc/pgconn"
+
 	"chat-room-api/internal/core/domain"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 )
 
 const (
@@ -15,11 +17,16 @@ const (
 
 type (
 	Storage struct {
-		client *pgx.Conn
+		client querier
+	}
+
+	querier interface {
+		Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+		Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	}
 )
 
-func NewMessageStorage(dbClient *pgx.Conn) *Storage {
+func NewMessageStorage(dbClient querier) *Storage {
 	return &Storage{
 		client: dbClient,
 	}
