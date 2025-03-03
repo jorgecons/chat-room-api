@@ -13,8 +13,10 @@ const (
 	BadRequestErrorCode         = "bad_request"
 )
 
-var ErrFailedValidations = errors.New("failed validations over the message")
-var ErrLoginError = errors.New("error login")
+var (
+	ErrFailedValidations = errors.New("failed validations over the message")
+	ErrLoginError        = errors.New("error login")
+)
 
 type (
 	User struct {

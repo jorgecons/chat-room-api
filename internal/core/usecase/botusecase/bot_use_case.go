@@ -1,8 +1,9 @@
 package botusecase
 
 import (
-	"chat-room-api/internal/core/domain"
 	"context"
+
+	"chat-room-api/internal/core/domain"
 )
 
 type (

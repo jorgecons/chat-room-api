@@ -3,8 +3,9 @@ package sockethandler
 import (
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"chat-room-api/internal/core/domain"
 

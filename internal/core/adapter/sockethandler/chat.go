@@ -1,9 +1,10 @@
 package sockethandler
 
 import (
-	"chat-room-api/internal/core/domain"
 	"context"
 	"sync"
+
+	"chat-room-api/internal/core/domain"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"

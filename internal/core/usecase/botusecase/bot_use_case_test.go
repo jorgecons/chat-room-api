@@ -1,13 +1,14 @@
 package botusecase_test
 
 import (
-	"chat-room-api/internal/core/domain"
-	"chat-room-api/internal/core/usecase/botusecase"
-	"chat-room-api/internal/core/usecase/botusecase/mocks"
 	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"chat-room-api/internal/core/domain"
+	"chat-room-api/internal/core/usecase/botusecase"
+	"chat-room-api/internal/core/usecase/botusecase/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

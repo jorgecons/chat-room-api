@@ -1,13 +1,14 @@
 package chatusecase_test
 
 import (
-	"chat-room-api/internal/core/domain"
-	"chat-room-api/internal/core/usecase/chatusecase"
-	"chat-room-api/internal/core/usecase/chatusecase/mocks"
 	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"chat-room-api/internal/core/domain"
+	"chat-room-api/internal/core/usecase/chatusecase"
+	"chat-room-api/internal/core/usecase/chatusecase/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -36,6 +37,12 @@ func TestUseCase_Chat(t *testing.T) {
 		Text:     "/stock=some",
 		Date:     time.Date(2025, time.February, 1, 12, 0, 0, 0, time.UTC),
 	}
+	unknownCommandMsg := domain.Message{
+		Room:     "1",
+		Username: "some",
+		Text:     "/some=some",
+		Date:     time.Date(2025, time.February, 1, 12, 0, 0, 0, time.UTC),
+	}
 
 	testCases := map[string]struct {
 		run func(t *testing.T)
@@ -54,19 +61,25 @@ func TestUseCase_Chat(t *testing.T) {
 			s.whenTheUseCaseIsExecuted()
 			s.thenTheExecutionIsOK()
 		}},
+		"chat - error - unknown command": {func(t *testing.T) {
+			s := startScenario(t)
+			s.givenAValidMessage(unknownCommandMsg)
+			s.whenTheUseCaseIsExecuted()
+			s.thenTheExecutionIsNotOK(domain.ErrUnknownCommand)
+		}},
 		"chat - error - save error": {func(t *testing.T) {
 			s := startScenario(t)
 			s.givenAValidMessage(msg)
 			s.andSaveMessageWithError()
 			s.whenTheUseCaseIsExecuted()
-			s.thenTheExecutionIsNotOK()
+			s.thenTheExecutionIsNotOK(domain.ErrChatting)
 		}},
 		"chat - command - error - publish error": {func(t *testing.T) {
 			s := startScenario(t)
 			s.givenAValidMessage(commandMsg)
 			s.andPublishMessageWithError()
 			s.whenTheUseCaseIsExecuted()
-			s.thenTheExecutionIsNotOK()
+			s.thenTheExecutionIsNotOK(domain.ErrChatting)
 		}},
 	}
 
@@ -129,8 +142,8 @@ func (s *scenario) thenTheExecutionIsOK() {
 	assert.Nil(s.t, s.errorGot)
 }
 
-func (s *scenario) thenTheExecutionIsNotOK() {
+func (s *scenario) thenTheExecutionIsNotOK(err error) {
 	s.t.Helper()
 	assert.NotNil(s.t, s.errorGot)
-	assert.ErrorIs(s.t, s.errorGot, domain.ErrChatting)
+	assert.ErrorIs(s.t, s.errorGot, err)
 }

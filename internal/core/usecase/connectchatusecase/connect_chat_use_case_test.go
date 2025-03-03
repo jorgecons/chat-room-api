@@ -1,13 +1,14 @@
 package connectchatusecase_test
 
 import (
-	"chat-room-api/internal/core/domain"
-	"chat-room-api/internal/core/usecase/connectchatusecase"
-	"chat-room-api/internal/core/usecase/connectchatusecase/mocks"
 	"context"
 	"errors"
 	"testing"
 	"time"
+
+	"chat-room-api/internal/core/domain"
+	"chat-room-api/internal/core/usecase/connectchatusecase"
+	"chat-room-api/internal/core/usecase/connectchatusecase/mocks"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,7 +24,6 @@ type scenario struct {
 }
 
 func TestUseCase_ConnectChat(t *testing.T) {
-
 	testCases := map[string]struct {
 		run func(t *testing.T)
 	}{

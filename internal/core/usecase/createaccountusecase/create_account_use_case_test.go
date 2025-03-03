@@ -1,15 +1,17 @@
 package createaccountusecase_test
 
 import (
-	"chat-room-api/internal/core/domain"
+	"context"
 	"errors"
+	"testing"
+
+	"chat-room-api/internal/core/domain"
 
 	"chat-room-api/internal/core/usecase/createaccountusecase"
 	"chat-room-api/internal/core/usecase/createaccountusecase/mocks"
-	"context"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
 
 type scenario struct {
@@ -20,13 +22,10 @@ type scenario struct {
 	errorGot error
 }
 
-func TestUseCase_ConnectChat(t *testing.T) {
+func TestUseCase_CreateAccount(t *testing.T) {
 	user := domain.User{
 		Username: "some",
 		Password: "some",
-	}
-	userHashError := domain.User{
-		Username: "some",
 	}
 	testCases := map[string]struct {
 		run func(t *testing.T)
@@ -40,7 +39,7 @@ func TestUseCase_ConnectChat(t *testing.T) {
 		}},
 		"connect chat - error - save error": {func(t *testing.T) {
 			s := startScenario(t)
-			s.givenAValidUser(userHashError)
+			s.givenAValidUser(user)
 			s.andSaveUserWithError()
 			s.whenTheUseCaseIsExecuted()
 			s.thenTheExecutionIsNotOK()

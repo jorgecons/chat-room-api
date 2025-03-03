@@ -20,7 +20,6 @@ type User struct {
 func HashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		// LOG
 		return zeroPassword, WrapError(ErrHashingPassword, err)
 	}
 	return string(hashedPassword), nil
