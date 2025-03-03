@@ -99,7 +99,7 @@ func (a *App) Consume() *App {
 	msgs, err := a.queueConsumer.consumer.Consume(
 		a.queueConsumer.queue.Name,
 		"",
-		true,
+		false,
 		false,
 		false,
 		false,

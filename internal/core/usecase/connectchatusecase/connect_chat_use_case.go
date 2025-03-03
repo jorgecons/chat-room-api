@@ -35,9 +35,14 @@ func (uc *UseCase) ConnectChat(ctx context.Context, room string) ([]domain.Messa
 		logrus.WithContext(ctx).WithError(err).WithField("room", room).Error("Error getting messages")
 		return zeroMessages, err
 	}
+	res := reverseMessages(lm)
+	return res, nil
+}
+
+func reverseMessages(lm []domain.Message) []domain.Message {
 	res := make([]domain.Message, len(lm))
 	for i, j := len(lm)-1, 0; i >= 0 && j < len(lm); i, j = i-1, j+1 {
 		res[j] = lm[i]
 	}
-	return res, nil
+	return res
 }

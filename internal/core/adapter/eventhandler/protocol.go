@@ -1,7 +1,6 @@
 package eventhandler
 
 import (
-	"errors"
 	"time"
 
 	"chat-room-api/internal/core/domain"

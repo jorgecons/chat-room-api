@@ -1,11 +1,8 @@
 package botusecase
 
 import (
-	"context"
-	"fmt"
-	"time"
-
 	"chat-room-api/internal/core/domain"
+	"context"
 )
 
 type (
@@ -42,16 +39,16 @@ func NewUseCase(
 
 func (uc *UseCase) Bot(ctx context.Context, msg domain.Message) error {
 	var (
-		message   = domain.NewMessage(msg.Room, domain.BotUsername, "", time.Now().UTC())
+		message   = domain.NewBotMessage(msg.Room)
 		stockName = domain.GetStockName(msg.Text)
 	)
 	price, err := uc.stockRepo.GetPrice(ctx, stockName)
 	if err != nil {
-		message.Text = fmt.Sprintf("%s: %s", stockName, err.Error())
+		message.Text = domain.CreateBotErrorText(stockName, err)
 	} else {
-		message.Text = domain.CreateBotMessage(msg.Text, price)
+		message.Text = domain.CreateBotText(stockName, price)
 		if err = uc.messageRepository.Save(ctx, message); err != nil {
-			message.Text = fmt.Sprintf("%s: %s", stockName, err.Error())
+			message.Text = domain.CreateBotErrorText(stockName, err)
 		}
 	}
 	return uc.publisher.Publish(ctx, message, domain.BotMessageType)

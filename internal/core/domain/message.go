@@ -7,12 +7,15 @@ import (
 )
 
 const (
-	BotMessage       = "%s quote is $%f per share."
+	BotMessage       = "%s quote is $%f per share"
+	BotErrorMessage  = "%s: %s"
 	StockMessageType = "stock"
 	BotMessageType   = "bot"
 	BotUsername      = "bot"
 	StockPrefix      = "/stock="
 )
+
+var Now = time.Now // test purposes
 
 type Message struct {
 	Room     string    `json:"room"`
@@ -30,8 +33,20 @@ func NewMessage(room, username, text string, date time.Time) Message {
 	}
 }
 
-func CreateBotMessage(stockName string, price float64) string {
+func NewBotMessage(room string) Message {
+	return Message{
+		Room:     room,
+		Username: BotUsername,
+		Date:     Now().UTC(),
+	}
+}
+
+func CreateBotText(stockName string, price float64) string {
 	return fmt.Sprintf(BotMessage, stockName, price)
+}
+
+func CreateBotErrorText(stockName string, err error) string {
+	return fmt.Sprintf(BotErrorMessage, stockName, err.Error())
 }
 
 func GetStockName(text string) string {
