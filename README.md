@@ -8,7 +8,7 @@
 ## Assumptions
 - Store all messages, unless the stock commands and the error ones.
 - The bot is decoupled by consuming events in a queue.
-- The bot saves the messages and publish back to the queue.
+- The bot process the message, saves the messages if it is ok and publish back to the queue.
 - The bot can send error messages to the room, but this is not stored.
 - For unknown command, the user from the message is "System". This message is not saved.
 
