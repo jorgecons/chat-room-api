@@ -5,6 +5,13 @@
 **Jorge Luis Constable Giménez**  
 📧 Email: `jorge.constable@gmail.com`
 
+## Assumptions
+- Store all messages, unless the stock commands and the error ones.
+- The bot is decoupled by consuming events in a queue.
+- The bot saves the messages and publish back to the queue.
+- The bot can send error messages to the room, but this is not stored.
+- For unknown command, the user from the message is "System". This message is not saved.
+
 ## SocketListener,RabbitMQ Consumer with Gin API
 
 This project is an API written in Golang that:
@@ -71,8 +78,11 @@ Start chatting with others users. Also, can send stock command to retrieves its 
 ## ⚙️ Improvements
 - Add validations to support secure passwords.
 - Add https and wss to secure the connection avoiding man-in-the-middle exploits.
-- Improve login by validating if user is already connected and jwt expiration.
+- Improve sending token by query to connect to web socket. Is there a way to send it by headers?
+- Improve login by validating if the user is already connected and jwt expiration.
 - Improve logs to avoid sharing sensitive information, like db errors.
 - Improve room validations and connections.
 - Add rooms management.
+- Rabbit retries.
+- Retries when connecting to rabbit.
 - Improve frontend.
