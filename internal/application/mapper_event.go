@@ -26,13 +26,6 @@ func (a *App) MapEventRoutes() *App {
 					return
 				}
 				switch d.Type {
-				case domain.StockMessageType:
-					err := a.handlers.ConsumeBotMessageHandler(ctx, d.Body)
-					if err != nil {
-						_ = d.Nack(false, true)
-						return
-					}
-					_ = d.Ack(false)
 				case domain.BotMessageType:
 					msg := sockethandler.Message{}
 					_ = json.Unmarshal(d.Body, &msg)

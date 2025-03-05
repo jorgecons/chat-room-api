@@ -42,7 +42,7 @@ func (p *Publisher) Publish(ctx context.Context, msg domain.Message, messageType
 			WithError(err).
 			WithField("room", msg.Room).
 			WithField("stock", msg.Text).
-			Error("Error publishing message to the bot")
+			Error("Error publishing message")
 		return domain.WrapError(domain.ErrPublishingMessage, err)
 	}
 	return nil
