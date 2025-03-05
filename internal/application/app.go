@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"chat-room-api/internal/core/adapter/sockethandler"
@@ -59,7 +58,7 @@ func (a *App) BuildConsumer() *App {
 	)
 
 	for i := 0; i < maxRetries && conn == nil; i++ {
-		conn, err = amqp.Dial(os.Getenv("RABBITMQ_URL"))
+		conn, err = amqp.Dial(a.configuration.RabbitURL)
 		if err == nil {
 			break
 		}
@@ -77,12 +76,12 @@ func (a *App) BuildConsumer() *App {
 	}
 	// Step 3: Declare a queue
 	q, err := ch.QueueDeclare(
-		a.configuration.RabbitQueue, // name
-		true,                        // durable
-		false,                       // delete when unused
-		false,                       // exclusive
-		false,                       // no-wait
-		nil,                         // arguments
+		a.configuration.ConsumerQueue, // name
+		true,                          // durable
+		false,                         // delete when unused
+		false,                         // exclusive
+		false,                         // no-wait
+		nil,                           // arguments
 	)
 	if err != nil {
 		logrus.WithError(err).Panic("Failed to declare a queue")

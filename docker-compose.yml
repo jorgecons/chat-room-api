@@ -32,12 +32,26 @@ services:
     environment:
       - ROUTER_URL=0.0.0.0:8080
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
-      - RABBITMQ_QUEUE=chat_queue
+      - CONSUMER_QUEUE=chat_queue
+      - PUBLISHER_QUEUE=bot_queue
       - DB_URL=postgres://postgres:secret@db:5432/chatapp?sslmode=disable
-      - STOCK_PRICE_URL=https://stooq.com/q/l/?s=%s&f=sd2t2ohlcv&h&e=csv
       - JWT_SECRET=your-secret-key
     depends_on:
       - db
       - rabbitmq
     ports:
       - "8080:8080"
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+      - CONSUMER_QUEUE=bot_queue
+      - PUBLISHER_QUEUE=chat_queue
+      - STOCK_PRICE_URL=https://stooq.com/q/l/?s=%s&f=sd2t2ohlcv&h&e=csv
+      - DB_URL=postgres://postgres:secret@db:5432/chatapp?sslmode=disable
+    depends_on:
+      - rabbitmq
+      - db
